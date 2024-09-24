@@ -1,0 +1,291 @@
+lua scripts:
+Crouch script:
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local userInputService = game:GetService("UserInputService")
+local crouchKey = Enum.KeyCode.C
+local crouchButton = Enum.KeyCode.ButtonB
+
+local isCrouching = false
+local crouchAnimation = Instance.new("Animation")
+crouchAnimation.AnimationId = "rbxassetid://1234567890"
+
+local playingAnimation = nil
+
+local function toggleCrouch()
+    if not isCrouching then
+        humanoid:ChangeState(Enum.HumanoidStateType.Crouching)
+        playingAnimation = humanoid:LoadAnimation(crouchAnimation)
+        playingAnimation:Play()
+        isCrouching = true
+    else
+        humanoid:ChangeState(Enum.HumanoidStateType.Standing)
+        if playingAnimation then
+            playingAnimation:Stop()
+            playingAnimation = nil
+        end
+        isCrouching = false
+    end
+end
+
+userInputService.InputBegan:Connect(function(inputObject, gameProcessedEvent)
+    if gameProcessedEvent then return end
+    if inputObject.KeyCode == crouchKey or inputObject.KeyCode == crouchButton then
+        toggleCrouch()
+    end
+end)
+
+player.CharacterAdded:Connect(function(newCharacter)
+    character = newCharacter
+    humanoid = character:WaitForChild("Humanoid")
+end)
+
+
+
+
+datastore script:
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- Create a DataStore for money
+local moneyDataStore = DataStoreService:GetDataStore("PlayerMoneyDataStore")
+
+-- Function to load player money data
+local function loadPlayerMoney(player)
+	local playerId = player.UserId
+	local success, money = pcall(function()
+		return moneyDataStore:GetAsync(playerId)
+	end)
+
+	if success then
+		if money then
+			return money
+		else
+			return 0  -- Default money if no data is found
+		end
+	else
+		warn("Failed to load money for player " .. player.Name)
+		return 0
+	end
+end
+
+-- Function to save player money data
+local function savePlayerMoney(player)
+	local playerId = player.UserId
+	local money = player:FindFirstChild("leaderstats"):FindFirstChild("Money").Value
+
+	local success, err = pcall(function()
+		moneyDataStore:SetAsync(playerId, money)
+	end)
+
+	if not success then
+		warn("Failed to save money for player " .. player.Name .. ": " .. err)
+	end
+end
+
+-- Function to give money to the player
+local function giveMoney(player, amount)
+	local money = player:FindFirstChild("leaderstats"):FindFirstChild("Money")
+	if money then
+		money.Value = money.Value + amount
+		savePlayerMoney(player)  -- Save the updated money value
+	end
+end
+
+-- Function to initialize player data when they join
+local function onPlayerAdded(player)
+	-- Create a leaderstats folder to hold player stats
+	local leaderstats = Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = player
+
+	-- Create a new IntValue to hold the player's money
+	local money = Instance.new("IntValue")
+	money.Name = "Money"
+	money.Parent = leaderstats
+
+	-- Load existing money and set it to the player's Money value
+	money.Value = loadPlayerMoney(player)
+end
+
+-- Function to handle player leaving, saving their data
+local function onPlayerRemoving(player)
+	savePlayerMoney(player)
+end
+
+-- Connect player events
+Players.PlayerAdded:Connect(onPlayerAdded)
+Players.PlayerRemoving:Connect(onPlayerRemoving)
+
+-- Loop to give money specifically to "Rednoahplays"
+local function awardMoneyToRednoahplays()
+	while true do
+		wait(10)  -- Wait for 10 seconds
+		for _, player in ipairs(Players:GetPlayers()) do
+			-- Check if the player's name is "Rednoahplays"
+			if player.Name == "Rednoahplays" then
+				giveMoney(player, 10)  -- Give 10 money
+			end
+		end
+	end
+end
+
+-- Start the function in a new coroutine
+coroutine.wrap(awardMoneyToRednoahplays)()
+
+
+
+
+
+
+teleport with cooldwon script
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local delay = 0.5
+local canMove = true
+script.Parent.MouseButton1Click:Connect(function()
+	if canMove then
+	character:MoveTo(workspace.Place1.Position)
+	canMove = false
+	script.Parent.Text = "Teleporting..."
+	wait(delay)
+	script.Parent.Text = "Teleport"
+	canMove = true
+	end
+end)
+
+
+
+
+
+
+sprint script for ps4 and pc
+
+local UserInputService = game:GetService("UserInputService")
+UserInputService.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 32
+	end
+end)
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.LeftShift then
+		game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+	end
+end)
+UserInputService.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.W then
+		print("WOOBEN")
+	end
+end)
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = game.Players.LocalPlayer
+
+UserInputService.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.ButtonL2 then
+		print("Alan bay verite")
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+			LocalPlayer.Character.Humanoid.WalkSpeed = 32
+		end
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.ButtonL2 then
+		if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+			LocalPlayer.Character.Humanoid.WalkSpeed = 16
+		end
+	end
+end)
+
+
+a Killbrick script:
+local CollectionService = game:GetService("CollectionService")
+local damageBrick = script.Parent
+
+local damageAmount = 100 -- Amount of damage the brick will cause
+local damageDebounceTime = 1 -- Time in seconds before damage can be reapplied
+local debounce = {} -- Table to track when players were last damaged
+
+
+local function onTouched(hit)
+    if not hit or not hit.Parent then return end -- Check if the hit object is valid
+
+    local humanoid = hit.Parent:FindFirstChildOfClass("Humanoid") -- Find humanoid in the character
+    if not humanoid then return end -- Return if there is no humanoid
+
+    local player = game.Players:GetPlayerFromCharacter(hit.Parent) -- Get player from character
+
+    local timeNow = os.clock() -- Get the current time
+    local lastDamageTime = debounce[humanoid] -- Check last damage time for the humanoid
+
+
+    if lastDamageTime and timeNow - lastDamageTime < damageDebounceTime then
+        return -- Exit the function to avoid repeated damage
+    end
+
+    humanoid:TakeDamage(damageAmount) -- Apply damage to the humanoid
+    debounce[humanoid] = timeNow -- Update the last damage time
+end
+damageBrick.Touched:Connect(onTouched)
+function debugPrint(message)
+    print(message) -- Print debug information to the output
+end
+debugPrint("player killed")
+
+
+double jump script:
+local UserInputService = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local cooldownTime = 2 -- Cooldown time in seconds
+local canDoubleJump = false
+local jumpCount = 0
+local isJumping = false
+
+function onJumpRequest()
+    if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+        if canDoubleJump and not isJumping then
+            jumpCount = jumpCount + 1
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            humanoid.JumpPower = 50
+            canDoubleJump = false
+            isJumping = true
+            task.wait(cooldownTime)
+            canDoubleJump = false
+            isJumping = false
+            jumpCount = 0
+            humanoid.JumpPower = 30 -- Reset JumpPower to default after cooldown
+        end
+    else
+        jumpCount = jumpCount + 1
+        if jumpCount == 1 then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            humanoid.JumpPower = 50
+            canDoubleJump = true
+        elseif jumpCount > 1 then
+            if not isJumping then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                canDoubleJump = false
+                isJumping = true
+                task.wait(cooldownTime)
+                isJumping = false
+                jumpCount = 0
+                humanoid.JumpPower = 30 -- Reset JumpPower to default after cooldown
+            end
+        end
+    end
+end
+
+UserInputService.JumpRequest:Connect(onJumpRequest)
+
+humanoid.StateChanged:Connect(function(oldState, newState)
+    if newState == Enum.HumanoidStateType.Landed then
+        jumpCount = 0
+        canDoubleJump = false
+    end
+end)
